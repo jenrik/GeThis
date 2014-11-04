@@ -1,0 +1,77 @@
+html, body {
+	height: 100%;
+}
+body {
+	padding: .5em 1em;
+	box-sizing: padding-box;
+}
+
+/*#header {
+	width: 100%;
+	padding: 1em;
+}
+
+#header > * {
+	width: 100%;
+	display: inline-block; !important
+}*/
+
+.spaced > * {
+	margin-bottom: 5px;
+}
+
+.spaced:last-child {
+	margin-bottom: 0;
+}
+
+.downloader {
+	padding: 1em;
+}
+
+.downloadTable {
+	width: 100%;
+}
+
+.remove {
+	width: 40px;
+}
+
+.remove span {
+	float: right;
+}
+
+.remove:hover {
+	color: red;
+}
+
+.left {
+	float: left;
+}
+
+.right {
+	float: right;
+}
+
+#downloadPanelHeading > * {
+	display: inline-block;
+}
+
+#downloadPanelHeading {
+	height: 42px;
+}
+
+#openDownloadModal {
+	padding: 3px;
+}
+
+#downloadList {
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+}
+
+#downloads {
+	overflow: scroll;
+	height: 100%;
+	padding-bottom: 56px;
+}
