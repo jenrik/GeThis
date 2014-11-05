@@ -26,8 +26,7 @@ io.on("connection", function(socket) {
 		    throttle: 1000 // Throttle the progress event to 2000ms, defaults to 1000ms
 		})
 		p.name = uuid.v4();
-		var temp = data.title.match(/[^\/?#]+(?=$|[?#])/);
-		p.title = ((temp === null) ? "unnamed.bin" : temp[0]);
+		p.title = data.title;
 		p.aborted = false;
 		p.finished = false;
 		downloading[p.name] = p;

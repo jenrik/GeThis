@@ -113,4 +113,25 @@ $(document).ready(function() {
 	$("#openDownloadModal").on("click", function() {
 		$("#downloadModal").modal("show");
 	});
+
+	var urlChangeListener = function() {
+		console.log("url change");
+		var match = $url.val().match(/[^\/?#]+(?=$|[?#])/);
+		if (($name.val() === "" || $name.attr("auto-set") == "true") && match != null) {
+			$name.attr("auto-set", true);
+			$name.val(match[0]);
+		};
+	};
+	$url.on("keyup", urlChangeListener);
+	$url.on("change", urlChangeListener);
+	$url.on("input", urlChangeListener);
+
+	var nameChangeListener = function() {
+		if ($name.val() !== "") {
+			$name.attr("auto-set", false);
+		};
+	};
+	$name.on("keyup", nameChangeListener);
+	$name.on("change", nameChangeListener);
+	$name.on("input", nameChangeListener);
 });
