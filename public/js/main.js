@@ -127,11 +127,20 @@ $(document).ready(function() {
 	$url.on("input", urlChangeListener);
 
 	var nameChangeListener = function() {
-		if ($name.val() !== "") {
+		var match = $url.val().match(/[^\/?#]+(?=$|[?#])/);
+		var temp = null;
+		console.log(match);
+		if (match != null) temp = match[0];
+		if ($name.val() !== "" && temp !== $name.val()) {
 			$name.attr("auto-set", false);
-		};
+		} else {
+			$name.attr("auto-set", true);
+		}
 	};
 	$name.on("keyup", nameChangeListener);
 	$name.on("change", nameChangeListener);
 	$name.on("input", nameChangeListener);
+	$url.on("keyup", nameChangeListener);
+	$url.on("change", nameChangeListener);
+	$url.on("input", nameChangeListener);
 });
