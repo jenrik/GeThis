@@ -26,10 +26,6 @@ function getRemoveButton(e) {
 	return e.find(".remove > button");
 }
 
-function disableRemoveButton(e) {
-	return getRemoveButton(e).attr("disabled", true);
-}
-
 $(document).ready(function() {
 	var socket = io();
 	var $downloads = $("#downloads");
@@ -40,9 +36,6 @@ $(document).ready(function() {
 	socket.on("connect", function() {
 		console.log("Connected to server");
 		$downloads.empty();
-		$("#name").removeAttr("disabled");
-		$("#url").removeAttr("disabled");
-		$("#submit").removeAttr("disabled");
 	});
 
 	socket.on("in progress", function(data) {
@@ -53,18 +46,31 @@ $(document).ready(function() {
 		} else if (data.aborted) {
 			data.panel = "warning";
 			data.progressbar = "warning";
+		} else if (data.failed) {
+			data.panel = "danger";
+			data.progressbar = "danger";
 		} else {
 			data.panel = "primary";
 			data.progressbar = "info";
 		}
 
-		if (data.finished || data.aborted) {
-			data.disabled = true;
+		if (data.finished || data.failed || data.aborted) {
+			data.remove = "Remove from list";
+			data.done = true;
+		} else {
+			data.remove = "Abort download";
+			data.done = false;
 		};
 		var e = $(download(data));
 		getRemoveButton(e).on("click", function() {
 			console.log("aborting: " + data.title);
-			socket.emit("download abort", data.name);
+			//change functionality when aborted, failed or successed to removing the item
+			var d = getDownload(data.name);
+			if (d.attr("data-done") == "true") {
+				socket.emit("download remove", data.name);
+			} else {
+				socket.emit("download abort", data.name);
+			};
 		});
 		$downloads.append(e);
 	});
@@ -74,13 +80,14 @@ $(document).ready(function() {
 		var e = getDownload(data);
 		getProgressBar(e).css("width", "100%");
 		setStyle(e, "success");
-		disableRemoveButton(e);
+		e.attr("data-done", true);
 	});
 
 	socket.on("download failed", function(data) {
 		console.log("Download failed: " + JSON.stringify(data));
 		var e = getDownload(data);
 		setStyle(e, "danger");
+		e.attr("data-done", true);
 	});
 
 	socket.on("download progress", function(data) {
@@ -92,7 +99,7 @@ $(document).ready(function() {
 		console.log("Aborted: " + JSON.stringify(data));
 		var e = getDownload(data);
 		setStyle(e, "warning");
-		disableRemoveButton(e)
+		e.attr("data-done", true);
 	});
 
 	$("#submit").on("click", function() {
@@ -129,7 +136,6 @@ $(document).ready(function() {
 	var nameChangeListener = function() {
 		var match = $url.val().match(/[^\/?#]+(?=$|[?#])/);
 		var temp = null;
-		console.log(match);
 		if (match != null) temp = match[0];
 		if ($name.val() !== "" && temp !== $name.val()) {
 			$name.attr("auto-set", false);
@@ -143,4 +149,31 @@ $(document).ready(function() {
 	$url.on("keyup", nameChangeListener);
 	$url.on("change", nameChangeListener);
 	$url.on("input", nameChangeListener);
+
+	var fileExistsListener = function() {
+		socket.emit("exists", $name.val());
+	};
+	$name.on("keyup", fileExistsListener);
+	$name.on("change", fileExistsListener);
+	$name.on("input", fileExistsListener);
+	$url.on("keyup", fileExistsListener);
+	$url.on("change", fileExistsListener);
+	$url.on("input", fileExistsListener);
+
+	socket.on("exists", function(data) {
+		console.log("exists: " + JSON.stringify(data));
+		if ($name.val() == data.name && data.exists) {
+			if (!$("#nameExists").length) {
+				$name.parent().append('<span class="input-group-addon" id="nameExists">exists</span>');
+			} else {
+				console.log("nameExists exists");
+			};
+		} else {
+			$("#nameExists").remove();
+		}
+	});
+
+	socket.on("remove", function(name) {
+		getDownload(name).remove();
+	});
 });

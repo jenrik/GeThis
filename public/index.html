@@ -14,7 +14,7 @@
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 		<script id="template-download" type="text/x-handlebars-template">
-			<div class="downloader spaced panel panel-{{panel}}" id="{{name}}">
+			<div class="downloader spaced panel panel-{{panel}}" id="{{name}}" data-done="{{done}}">
 				<div class="heading">{{{title}}}</div>
 				<table class="downloadTable">
 					<tbody>
@@ -23,7 +23,7 @@
 								<div class="progress-bar progress-bar-{{progressbar}}" style="width: {{progress}}%"></div>
 							</td>
 							<td class="remove">
-								<button class="btn" {{#if disabled}}disabled{{/if}}>
+								<button class="btn" data-toggle="tooltip" title="{{remove}}">
 									<span class="glyphicon glyphicon-remove"></span>
 								</button>
 							</td>
@@ -44,8 +44,10 @@
 						<h4 class="modal-title" id="downloadModalLabel">Download file</h4>
 					</div>
 					<div class="modal-body spaced">
-						<input type="text" placeholder="URL to download" id="url" class="form-control" disabled>
-						<input type="text" placeholder="Name of file" id="name" class="form-control" disabled auto-set="true">
+						<input type="text" placeholder="URL to download" id="url" class="form-control">
+						<div class="input-group fillWidth">
+							<input type="text" placeholder="Name of file" id="name" class="form-control fillWidth" auto-set="true">
+						</div>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-primary" id="submit">Download</button>
@@ -53,12 +55,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!--<div id="header" class="spaced panel panel-defualt">
-			<input type="text" placeholder="URL to download" id="url" class="form-control" disabled>
-			<input type="text" placeholder="Name of file" id="name" class="form-control" disabled>
-			<button id="submit" class="btn btn-default" disabled>Download</button>
-		</div>-->
 
 		<div class="panel panel-default" id="downloadList">
 			<div class="panel-heading" id="downloadPanelHeading">

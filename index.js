@@ -17,7 +17,8 @@ io.on("connection", function(socket) {
 			"title": downloading[i].title,
 			"progress": (downloading[i].finished) ? 100 : downloading[i].state.percent,
 			"finished": downloading[i].finished,
-			"aborted": downloading[i].aborted
+			"aborted": downloading[i].aborted,
+			"failed": downloading[i].failed
 		});
 	};
 
@@ -29,6 +30,7 @@ io.on("connection", function(socket) {
 		p.title = data.title;
 		p.aborted = false;
 		p.finished = false;
+		p.failed = false;
 		downloading[p.name] = p;
 		p.on("progress", function (state) {
 			io.emit("download progress", {
@@ -46,8 +48,9 @@ io.on("connection", function(socket) {
 		p.pipe(f);
 		p.on('error', function (err) {
 		    socket.emit("download failed", p.name);
+		    p.failed = true;
 		})
-		socket.emit("in progress", {
+		io.emit("in progress", {
 			"name": p.name,
 			"title": p.title,
 			"progress": 0,
@@ -63,8 +66,29 @@ io.on("connection", function(socket) {
 			io.emit("download aborted", data);
 		};
 	});
+
+	socket.on("exists", function(name) {
+		fs.exists("./download/" + name, function(exists) { //.replace("../", "")
+			socket.emit("exists", {
+				"exists": exists,
+				"name": name
+			});
+		});
+	});
+
+	socket.on("download remove", function(name) {
+		var d = downloading[name];
+		if (!d.finished || !d.failed || !d.aborted) {
+			delete downloading[name];
+			io.emit("remove", name);
+		};
+	});
 });
 
-app.use("/", serveStatic("public"));
+app.use("/", serveStatic("public", {
+	extension: ["html"],
+	lastModified: true,
+	dotfiles: "ignore"
+}));
 
 server.listen(8080);

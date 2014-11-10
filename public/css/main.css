@@ -1,20 +1,11 @@
 html, body {
 	height: 100%;
 }
+
 body {
 	padding: .5em 1em;
 	box-sizing: padding-box;
 }
-
-/*#header {
-	width: 100%;
-	padding: 1em;
-}
-
-#header > * {
-	width: 100%;
-	display: inline-block; !important
-}*/
 
 .spaced > * {
 	margin-bottom: 5px;
@@ -38,10 +29,6 @@ body {
 
 .remove span {
 	float: right;
-}
-
-.remove:hover {
-	color: red;
 }
 
 .left {
@@ -74,4 +61,8 @@ body {
 	overflow: scroll;
 	height: 100%;
 	padding-bottom: 56px;
+}
+
+.fillWidth {
+	width: 100%;
 }
