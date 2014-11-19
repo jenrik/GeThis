@@ -78,6 +78,7 @@ $(document).ready(function() {
 	socket.on("download finished", function(data) {
 		console.log("Download finished: " + JSON.stringify(data));
 		var e = getDownload(data);
+		getRemoveButton(e).attr("title", "Remove form list");
 		getProgressBar(e).css("width", "100%");
 		setStyle(e, "success");
 		e.attr("data-done", true);
