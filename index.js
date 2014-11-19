@@ -9,6 +9,10 @@ var fs = require("fs");
 var uuid = require('node-uuid');
 
 var downloading = {};
+var downloadDir = "./download/";
+
+if(!fs.existsSync(downloadDir))
+	fs.mkdirSync(downloadDir);
 
 io.on("connection", function(socket) {
 	for (var i in downloading) {
@@ -38,7 +42,7 @@ io.on("connection", function(socket) {
 				"progress": state.percent
 			});
 		})
-		var f = fs.createWriteStream("download/" + data.title)
+		var f = fs.createWriteStream(downloadDir + data.title);
 		f.on('close', function (err) {
 			if (!p.aborted) {
 				p.finished = true;
@@ -68,7 +72,7 @@ io.on("connection", function(socket) {
 	});
 
 	socket.on("exists", function(name) {
-		fs.exists("./download/" + name, function(exists) { //.replace("../", "")
+		fs.exists(downloadDir + name, function(exists) { //.replace("../", "")
 			socket.emit("exists", {
 				"exists": exists,
 				"name": name
