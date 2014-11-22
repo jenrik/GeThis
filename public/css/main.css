@@ -7,7 +7,7 @@ body {
 	box-sizing: padding-box;
 }
 
-.spaced > * {
+.spaced > *, .downloader {
 	margin-bottom: 5px;
 }
 
@@ -19,12 +19,8 @@ body {
 	padding: 1em;
 }
 
-.downloadTable {
+.downloadTable, .tableProgress, .progress, .fillWidth {
 	width: 100%;
-}
-
-.remove {
-	width: 40px;
 }
 
 .remove span {
@@ -58,11 +54,16 @@ body {
 }
 
 #downloads {
-	overflow: scroll;
+	overflow: overlay;
 	height: 100%;
 	padding-bottom: 56px;
 }
 
-.fillWidth {
-	width: 100%;
+.remove .btn, .progress {
+	height: 40px;
+	margin: 0;
+}
+
+input.ng-dirty.ng-invalid {
+	border: 1px solid #e74c3c;
 }

@@ -1,6 +1,6 @@
 {
   "name": "WGeThis",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A utility to download files to a remote server",
   "main": "index.js",
   "keywords": [
@@ -17,5 +17,6 @@
     "request-progress": "git://github.com/jenrik/node-request-progress.git",
     "serve-static": "^1.7.1",
     "socket.io": "^1.2.0"
-  }
+  },
+  "private": true
 }

@@ -89,7 +89,13 @@ io.on("connection", function(socket) {
 	});
 });
 
-app.use("/", serveStatic("public", {
+app.use("/", serveStatic(__dirname + "/public", {
+	extension: ["html"],
+	lastModified: true,
+	dotfiles: "ignore"
+}));
+
+app.use("/bower_components", serveStatic(__dirname + "/bower_components", {
 	extension: ["html"],
 	lastModified: true,
 	dotfiles: "ignore"

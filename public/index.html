@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="gethis">
 	<head>
 		<title>GeThis</title>
 		<link rel="icon" href="imgs/icon-32.png" type="image/png">
@@ -9,64 +9,27 @@
 		<link href="imgs/icon-256.png" rel="apple-touch-icon" sizes="256x256" />
 		<link href="imgs/icon-512.png" rel="apple-touch-icon" sizes="512x512" />
 
-		<link rel="stylesheet" type="text/css" href="css/normalize.css">
-		<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="bower_components/normalize-css/normalize.css">
+		<link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap-theme.min.css">
 		<link rel="stylesheet" type="text/css" href="css/main.css">
 
-		<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-		<script type="text/javascript" src="js/handlebars-2.0.0.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
-		<script type="text/javascript" src="js/main.js"></script>
-		<script id="template-download" type="text/x-handlebars-template">
-			<div class="downloader spaced panel panel-{{panel}}" id="{{name}}" data-done="{{done}}">
-				<div class="heading">{{{title}}}</div>
-				<table class="downloadTable">
-					<tbody>
-						<tr>
-							<td class="progress tableProgress">
-								<div class="progress-bar progress-bar-{{progressbar}}" style="width: {{progress}}%"></div>
-							</td>
-							<td class="remove">
-								<button class="btn" data-toggle="tooltip" title="{{remove}}">
-									<span class="glyphicon glyphicon-remove"></span>
-								</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</script>
 	</head>
 	<body>
-		<div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal">
-							<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-						</button>
-						<h4 class="modal-title" id="downloadModalLabel">Download file</h4>
-					</div>
-					<div class="modal-body spaced">
-						<input type="text" placeholder="URL to download" id="url" class="form-control">
-						<div class="input-group fillWidth">
-							<input type="text" placeholder="Name of file" id="name" class="form-control fillWidth" auto-set="true">
-						</div>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-primary" id="submit">Download</button>
-					</div>
-				</div>
-			</div>
-		</div>
+		<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
+		<script type="text/javascript" src="bower_components/angular-bootstrap/ui-bootstrap.min.js"></script>
+		<script type="text/javascript" src="bower_components/angular-socket-io/socket.min.js"></script>
+		<script type="text/javascript" src="js/app.js"></script>
 
 		<div class="panel panel-default" id="downloadList">
 			<div class="panel-heading" id="downloadPanelHeading">
 				<p class="left">Downloads</p>
-				<span class="glyphicon glyphicon-plus right" id="openDownloadModal"></span>
+				<span class="glyphicon glyphicon-plus right" id="openDownloadModal" ng-controller="DownloadModalController as modalCtrl" ng-click="modalCtrl.open()"></span>
 			</div>
-			<div class="panel-body" id="downloads">Loading...</div>
+			<div class="panel-body" id="downloads" ng-controller="DownloadListController as dllist">
+				<download ng-repeat="download in dllist.downloads"></download>
+			</div>
 		</div>
 	</body>
 </html>

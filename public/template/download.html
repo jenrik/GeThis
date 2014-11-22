@@ -1,0 +1,28 @@
+<div class="downloader panel" id="{{name}}" ng-class="{ 'panel-primary': download.status == 'working', 'panel-success':  download.status == 'finished', 'panel-danger':  download.status == 'failed', 'panel-warning':  download.status == 'aborted' }">
+	<div class="heading">{{download.title}}</div>
+	<table class="downloadTable">
+		<tbody>
+			<tr>
+				<td class="tableProgress" ng-switch="download.status">
+					<div ng-switch-when="working">
+						<progressbar value="download.progress" type="info"></progressbar>
+					</div>
+					<div ng-switch-when="finished">
+						<progressbar value="download.progress" type="success"></progressbar>
+					</div>
+					<div ng-switch-when="aborted">
+						<progressbar value="download.progress" type="warning"></progressbar>
+					</div>
+					<div ng-switch-when="failed">
+						<progressbar value="download.progress" type="danger"></progressbar>
+					</div>
+				</td>
+				<td class="remove" ng-controller="DownloadButtonController as button">
+					<button class="btn" tooltip="{{remove}}" ng-click="button.click(download)">
+						<span class="glyphicon glyphicon-remove"></span>
+					</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
