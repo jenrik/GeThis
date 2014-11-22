@@ -7,16 +7,21 @@ body {
 	box-sizing: padding-box;
 }
 
-.spaced > *, .downloader {
+.spaced > * {
 	margin-bottom: 5px;
 }
 
-.spaced:last-child {
+.downloads {
+	margin-bottom: 10px
+}
+
+.spaced:last-child, .downloads:last-child {
 	margin-bottom: 0;
 }
 
 .downloader {
 	padding: 1em;
+	margin-bottom: 20px
 }
 
 .downloadTable, .tableProgress, .progress, .fillWidth {
@@ -66,4 +71,10 @@ body {
 
 input.ng-dirty.ng-invalid {
 	border: 1px solid #e74c3c;
+}
+
+.modal-backdrop {
+	position: fixed;
+	width: 100%;
+	height: 100%;
 }
