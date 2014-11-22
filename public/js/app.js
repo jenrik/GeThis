@@ -13,15 +13,6 @@ app.controller("DownloadListController", function(socket) {
 
 	socket.on("in progress", function(data) {
 		console.log("in progress: ", data);
-		if (data.failed) 
-			data.status = "failed";
-		else if(data.finished)
-			data.status = "finished";
-		else if(data.aborted)
-			data.status = "aborted";
-		else
-			data.status = "working";
-
 		downloads[data.name] = data;
 	});
 
