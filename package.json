@@ -1,5 +1,5 @@
 {
-  "name": "WGeThis",
+  "name": "GeThis",
   "version": "1.1.0",
   "description": "A utility to download files to a remote server",
   "main": "index.js",
@@ -18,5 +18,9 @@
     "serve-static": "^1.7.1",
     "socket.io": "^1.2.0"
   },
-  "private": true
+  "private": true,
+  "scripts": {
+    "install": "bower install",
+    "start": "node index.js"
+  }
 }
