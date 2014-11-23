@@ -16,16 +16,8 @@ app.controller("DownloadListController", function(socket) {
 		downloads[data.name] = data;
 	});
 
-	socket.on("download finished", function(data) {
-		downloads[data].status = "finished";
-	});
-
-	socket.on("download failed", function(data) {
-		downloads[data].status = "failed";
-	});
-
-	socket.on("download aborted", function(data) {
-		downloads[data].status = "aborted";
+	socket.on("download status", function(data) {
+		downloads[data.name].status = data.status;
 	});
 
 	socket.on("remove", function(data) {
@@ -40,9 +32,9 @@ app.controller("DownloadListController", function(socket) {
 
 app.controller("DownloadButtonController", function(socket) {
 	this.click = function(download) {
-		if (download.finished) {
+		if (download.status == "aborted") {
 			socket.emit("download remove", download.name);
-		} else if(!download.abort) {
+		} else if(download.status == "working") {
 			socket.emit("download abort", download.name);
 		};
 	};
