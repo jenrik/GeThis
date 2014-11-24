@@ -1,11 +1,11 @@
-<form ng-submit="modal.download(modal)" name="downloadForm">
+<form ng-submit="modal.download()" name="downloadForm">
 	<div class="modal-header">
 		<h4 class="modal-title">Download file</h4>
 	</div>
 	<div class="modal-body spaced">
-		<input type="url" name="url" placeholder="URL to download" class="form-control" ng-model="modal.url" required>
+		<input type="url" name="url" placeholder="URL to download" class="form-control" ng-model="modal.url" ng-change="modal.extractFilename()" required>
 		<div class="input-group fillWidth">
-			<input type="text" name="filename" placeholder="Name of file" class="form-control fillWidth" ng-model="modal.filename" ng-change="modal.checkExists(modal)" required>
+			<input type="text" name="filename" placeholder="Name of file" class="form-control fillWidth" ng-model="modal.filename" ng-change="modal.checkExists()" required>
 			<span class="input-group-addon" ng-show="modal.exists.filename === modal.filename && modal.exists.exists">exists</span>
 		</div>
 	</div>

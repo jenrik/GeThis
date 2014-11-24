@@ -70,10 +70,10 @@ app.controller("DownloadModalInstanceController", function($modalInstance, socke
 	};
 	var controller = this;
 
-	this.download = function(modal) {
+	this.download = function() {
 		$modalInstance.close({
-			"title": modal.filename,
-			"url": modal.url
+			"title": controller.filename,
+			"url": controller.url
 		});
 	};
 
@@ -81,12 +81,20 @@ app.controller("DownloadModalInstanceController", function($modalInstance, socke
 		$modalInstance.dismiss();
 	};
 
-	this.checkExists = function(modal) {
-		socket.emit("exists", modal.filename);
+	this.checkExists = function() {
+		socket.emit("exists", controller.filename);
 	};
 
 	socket.on("exists", function(data) {
 		controller.exists.exists = data.exists
 		controller.exists.filename = data.name;
 	});
+
+	this.extractFilename = function() {
+		var match = controller.url.match(/[^\/?#]+(?=$|[?#])/);
+		if (match) {
+			controller.filename = match[0];
+			controller.checkExists();
+		}
+	};
 });
