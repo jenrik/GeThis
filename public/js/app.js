@@ -32,9 +32,9 @@ app.controller("DownloadListController", function(socket) {
 
 app.controller("DownloadButtonController", function(socket) {
 	this.click = function(download) {
-		if (download.status == "aborted") {
+		if (download.status != "working") {
 			socket.emit("download remove", download.name);
-		} else if(download.status == "working") {
+		} else {
 			socket.emit("download abort", download.name);
 		};
 	};
