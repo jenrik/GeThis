@@ -31,10 +31,13 @@ app.controller("DownloadListController", function(socket) {
 		downloads[data.name].progress = data.progress;
 	});
 
-	socket.on("connect_error", function(err) {
+	var disconnectListener = function(err) {
 		controller.connected = false;
 		controller.downloads = {};
-	});
+	};
+
+	socket.on("connect_error", disconnectListener);
+	socket.on("connect_timeout", disconnectListener);
 
 	socket.on("reconnect", function() {
 		controller.connected = true;
