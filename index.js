@@ -2,12 +2,13 @@ var request = require("request");
 var progress = require("request-progress");
 var fs = require("fs");
 var uuid = require("node-uuid");
+var winston = require("winston");
 
 var app = require("express")();
 var serveStatic = require("serve-static");
 var server = require("http").createServer(app);
 
-var logger = new (require("winston").Logger)({
+var logger = new (winston.Logger)({
 	transports: [
 		new (winston.transports.Console)()
 	],
