@@ -1,15 +1,13 @@
-var express = require("express");
-var app = express();
-var server = require("http").createServer(app);
-var io = require("socket.io")(server);
-var serveStatic = require("serve-static");
 var request = require("request");
 var progress = require("request-progress");
 var fs = require("fs");
 var uuid = require("node-uuid");
-var winston = require("winston");
 
-var logger = new (winston.Logger)({
+var app = require("express")();
+var serveStatic = require("serve-static");
+var server = require("http").createServer(app);
+
+var logger = new (require("winston").Logger)({
 	transports: [
 		new (winston.transports.Console)()
 	],
@@ -21,183 +19,169 @@ var logger = new (winston.Logger)({
 	}
 });
 
-var downloading = {};				// The list of downloads
-var downloadDir = "./download/";	// The directorie to download files to
+var state = {
+	"logger": logger,
+	"downloads": {},
+	"config": {
+		"downloadDir": "./download/", // The directorie to download files to
+		"port": process.env.PORT || 8080 // Port to serve on
+	},
+	"server": server,
+	"app": app,
+	"emitter": new (require('events').EventEmitter),
+	"funcs": {}
+}
 
 // Make sure the download directorie exists
-if(!fs.existsSync(downloadDir))
-	fs.mkdirSync(downloadDir);
+if(!fs.existsSync(state.config.downloadDir)) {
+	fs.mkdirSync(state.config.downloadDir);
+	logger.log("info", "created download directorie", state.config.downloadDir);
+}
 
-// Triggered when a client connects
-io.on("connection", function(socket) {
-	// Inform connecting clients about all downloads in the system
-	for (var i in downloading) {
-		socket.emit("in progress", {
-			"name": downloading[i].id,
-			"title": downloading[i].filename,
-			"progress": (downloading[i].status == "finished") ? 100 : downloading[i].progress, // If the download has finished just sent 100
-			"status": downloading[i].status
-		});
-	}
+/**
+ * Functions
+ */
 
-	// Trigged when a client request that a download is initialized
-	socket.on("download", function(data) {
-		if (data == null || data.title == null || typeof data.title !== "string" || data.title.length <= 0 || data.url == null || typeof data.url !== "string" || data.url.length <= 0) {
-			logger.log("warning", "invalid data was send with download request", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
+state.funcs.download = function(filename, url, executor) {
+	if (filename == null || typeof filename !== "string" || filename.length <= 0 ||
+		url == null      || typeof url !== "string"      || url.length <= 0) {
+			logger.log("warning", "invalid arguments to download", {
+				"connectionMethod": executor.protocol,
+				"clientIp": executor.ip,
 				"data": data
 			});
 			return;
+	}
+
+	// Start the download
+	var d = {
+		request: progress(request(url)),	// The Request object
+		id: uuid.v4(),							// ID
+		filename: filename,						// Filename
+		url: url,								// Url downloaded from
+		status: "working",						// Initial status
+		progress: 0,							// Percent downloaded
+		startedBy: executor.ip,					// The ip who initiated the download
+		startedWith: executor.protocol			// The protocol the download was started with
+	}
+
+	state.downloads[d.id] = d;// List the download for further reference
+
+	// Sends out progress status when we get them
+	d.request.on("progress", function (download) {
+		d.progress = download.percent;
+		state.emitter.emit("progress", d);
+	});
+
+	// Open a write stream for writing the downloaded file to disk
+	var f = fs.createWriteStream(state.config.downloadDir + filename);
+
+	// Triggerd when when the stream is closed
+	f.on("close", function (err) {
+		if (d.status !== "aborted") {
+			d.status = "finished";
+			state.emitter.emit("status changed", d);
 		}
+	});
 
-		// Start the download
-		var d = {
-			request: progress(request(data.url)),	// The Request object
-			id: uuid.v4(),							// ID
-			filename: data.title,					// Filename
-			url: data.url,							// Url downloaded from
-			status: "working",						// Initial status
-			progress: 0,							// Percent downloaded
-			startedBy: socket.handshake.address		// The ip who initiated the download
-		}
+	// Write downloaded data to the stream
+	d.request.pipe(f);
 
-		downloading[data.id] = d;// List the download for further reference
+	// Incase the download fails
+	d.request.on("error", function (err) {
+		d.status = "failed";
+		state.emitter.emit("status changed", d);
 
-		// Sends out progress status when we get them
-		d.request.on("progress", function (state) {
-			d.progress = state.percent;
-			io.emit("download progress", {
-				"name": d.id,
-				"progress": d.progress
-			});
+		logger.log("error", "download failed", {
+			"filename": d.filename,
+			"url": d.url,
+			"startedBy": d.startedBy,
+			"error": err
 		});
+	});
 
-		// Open a write stream for writing the downloaded file to disk
-		var f = fs.createWriteStream(downloadDir + data.filename);
+	// Info all clients that there is a new download
+	state.emitter.emit("download started", d);
 
-		// Triggerd when when the stream is closed
-		f.on("close", function (err) {
-			if (d.status !== "aborted") {
-				d.status = "finished";
-				socket.emit("download status", {
-					"name": d.id,
-					"status": d.status
-				});
-			}
+	logger.log("notable", "download started", {
+		"connectionMethod": executor.protocol,
+		"clientIp": executor.ip,
+		"filename": filename,
+		"url": url
+	});
+}
+
+state.funcs.abort = function(id, executor) {
+	var d = state.downloads[id];
+	if (d === null || d == undefined) {
+		logger.log("warning", "invalid id given to abort", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"undefined": id === undefined,
+			"null": id === null
 		});
+		return;
+	}
+	if (d.status == "working") {
+		d.request.abort();
+		d.status = "aborted";
 
-		// Write downloaded data to the stream
-		d.request.pipe(f);
+		state.emitter.emit("status changed", d);
 
-		// Incase the download fails
-		d.request.on("error", function (err) {
-			d.status = "failed";
-			socket.emit("download status", {
-				"name": d.id,
-				"status": d.status
-			});
-			logger.log("error", "download failed", {
-				"filename": d.filename,
-				"url": d.url,
-				"startedBy": d.startedBy,
-				"error": err
-			});
+		logger.log("notable", "download aborted", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": d.filename
 		});
-
-		// Info all clients that there is a new download
-		io.emit("in progress", {
-			"name": d.id,
-			"title": d.filename,
-			"progress": d.progress,
+	} else {
+		logger.log("warning", "attempted to abort non-working download", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": d.filename,
 			"status": d.status
 		});
+	}
+}
 
-		logger.log("notable", "download started", {
-			"connectionMethod": "socket.io",
-			"clientIp": socket.handshake.address,
-			"receivedData": data
+state.funcs.exists = function(filename, cb) {
+	fs.exists(state.config.downloadDir + filename, function(exists) {
+		cb(exists);
+	});
+}
+
+state.funcs.remove = function(id, executor) {
+	var d = state.downloads[id];
+	if (d === null || d == undefined) {
+		logger.log("warning", "invalid id given to remove", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"undefined": id === undefined,
+			"null": id === null
 		});
-	});
+		return;
+	}
+	if (d.status != "working") {
+		delete state.downloads[id];
 
-	// Triggered when download is aborted
-	socket.on("download abort", function(id) {
-		var d = downloading[id];
-		if (d === null || d == undefined) {
-			logger.log("warning", "invalid name was send with abort request", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"undefined": id === undefined,
-				"null": id === null
-			});
-			return;
-		}
-		if (d.status == "working") {
-			d.request.abort();
-			d.status = "aborted";
-			io.emit("download status", {
-				"name": id,
-				"status": d.status
-			});
-			logger.log("notable", "download aborted", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"filename": d.filename
-			});
-		} else {
-			logger.log("warning", "attempted to abort non-working download", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"filename": d.filename,
-				"status": d.status
-			});
-		}
-	});
+		state.emitter.emit("download removed", d);
 
-	// Send from client to check if a file exists
-	socket.on("exists", function(filename) {
-		fs.exists(downloadDir + filename, function(exists) { //.replace("../", "")
-			socket.emit("exists", {
-				"exists": exists,
-				"name": filename
-			});
+		logger.log("info", "download removed", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": d.filename
 		});
-	});
+	} else {
+		logger.log("warning", "attempted to remove working download", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": d.filename,
+			"status": d.status
+		});
+	}
+}
 
-	// Triggered when a client has requested a download removed from the list of files
-	socket.on("download remove", function(id) {
-		var d = downloading[id];
-		if (d === null || d == undefined) {
-			logger.log("warning", "invalid name was send with remove request", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"undefined": name === undefined,
-				"null": name === null
-			});
-			return;
-		}
-		if (d.status != "working") {
-			delete downloading[id];
-			io.emit("remove", id);
-			logger.log("info", "download removed", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"filename": d.filename
-			});
-		} else {
-			logger.log("warning", "attempted to remove working download", {
-				"connectionMethod": "socket.io",
-				"clientIp": socket.handshake.address,
-				"filename": d.filename,
-				"status": d.status
-			});
-		}
-	});
-
-	logger.log("info", "socket client connected", {
-		"clientIp": socket.handshake.address
-	});
-});
+// Setup websocket
+require(__dirname + "/libs/websocket.js")(state);
 
 // Serves static files that a system specific
 app.use("/", serveStatic(__dirname + "/public", {
@@ -214,4 +198,4 @@ app.use("/bower_components", serveStatic(__dirname + "/bower_components", {
 }));
 
 //Start the server
-server.listen(8080);
+server.listen(state.config.port);

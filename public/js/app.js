@@ -14,20 +14,26 @@ app.controller("DownloadListController", function(socket) {
 	this.connected = false;
 
 	socket.on("in progress", function(data) {
-		console.log("in progress: ", data);
+		console.log("in progress:", data);
 		downloads[data.name] = data;
 	});
 
 	socket.on("download status", function(data) {
+		console.log("download status:", data);
 		downloads[data.name].status = data.status;
+
+		if (data.status === "finished") {
+			downloads[data.name].progress = 100;
+		}
 	});
 
 	socket.on("remove", function(data) {
+		console.log("remove:", data);
 		delete downloads[data];
 	});
 
 	socket.on("download progress", function(data) {
-		console.log("Progress: " + JSON.stringify(data));
+		console.log("download progress:" + JSON.stringify(data));
 		downloads[data.name].progress = data.progress;
 	});
 
@@ -104,6 +110,7 @@ app.controller("DownloadModalInstanceController", function($modalInstance, socke
 	};
 
 	socket.on("exists", function(data) {
+		console.log("exists:", data);
 		controller.exists.exists = data.exists
 		controller.exists.filename = data.name;
 	});
