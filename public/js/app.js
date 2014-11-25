@@ -10,6 +10,8 @@ app.factory("socket", function(socketFactory) {
 app.controller("DownloadListController", function(socket) {
 	this.downloads = {};
 	var downloads = this.downloads;
+	var controller = this;
+	this.connected = false;
 
 	socket.on("in progress", function(data) {
 		console.log("in progress: ", data);
@@ -27,6 +29,19 @@ app.controller("DownloadListController", function(socket) {
 	socket.on("download progress", function(data) {
 		console.log("Progress: " + JSON.stringify(data));
 		downloads[data.name].progress = data.progress;
+	});
+
+	socket.on("connect_error", function(err) {
+		controller.connected = false;
+		controller.downloads = {};
+	});
+
+	socket.on("reconnect", function() {
+		controller.connected = true;
+	});
+
+	socket.on("connect", function() {
+		controller.connected = true;
 	});
 });
 
@@ -47,7 +62,7 @@ app.directive("download", function() {
 	}
 });
 
-app.controller("DownloadModalController", function($scope, $modal, socket) {
+app.controller("DownloadModalController", function($modal, socket) {
 	this.open = function () {
 		var modalInstance = $modal.open({
 			templateUrl: 'template/downloadModal.html',

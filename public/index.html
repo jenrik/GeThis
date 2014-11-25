@@ -28,6 +28,9 @@
 				<span class="glyphicon glyphicon-plus right" id="openDownloadModal" ng-controller="DownloadModalController as modalCtrl" ng-click="modalCtrl.open()"></span>
 			</div>
 			<div class="panel-body" id="downloads" ng-controller="DownloadListController as dllist">
+				<div class="downloader panel panel-danger" ng-hide="dllist.connected">
+					<div class="heading">Your not connected to the server</div>
+				</div>
 				<download ng-repeat="download in dllist.downloads"></download>
 			</div>
 		</div>
