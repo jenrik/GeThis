@@ -30,7 +30,8 @@ var state = {
 	"server": server,
 	"app": app,
 	"emitter": new (require('events').EventEmitter),
-	"funcs": {}
+	"funcs": {},
+	"validation": require(__dirname + "/libs/validation.js")
 }
 
 // Make sure the download directorie exists
@@ -42,21 +43,62 @@ if(!fs.existsSync(state.config.downloadDir)) {
 /**
  * Functions
  */
+state.funcs.getAFilename = function(url) {
+	var match = url.match(/[^\/?#]+(?=$|[?#])/);
+	var name = "unnamed";
+	if (match !== null)
+		name = match[0];
+
+	if (!fs.existsSync(state.config.downloadDir + name)) {
+		return name;
+	}
+
+	var running = true;
+	var num = 0;
+	while(running) {
+		num++;
+		running = fs.existsSync(state.config.downloadDir + name + "." + num);
+	}
+
+	return name + "." + num;
+}
 
 state.funcs.download = function(filename, url, executor) {
-	if (filename == null || typeof filename !== "string" || filename.length <= 0 ||
-		url == null      || typeof url !== "string"      || url.length <= 0) {
-			logger.log("warning", "invalid arguments to download", {
-				"connectionMethod": executor.protocol,
-				"clientIp": executor.ip,
-				"data": data
+	if (!state.validation.url(url)) {
+		logger.log("warning", "invalid url given to download", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": filename,
+			"url": url
+		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "invalid url"
 			});
-			return;
+
+		return;
+	}
+
+	if (!state.validation.filename(filename)) {
+		logger.log("warning", "invalid filename given to download", {
+			"connectionMethod": executor.protocol,
+			"clientIp": executor.ip,
+			"filename": filename,
+			"url": url
+		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "invalid filename"
+			});
+
+		return;
 	}
 
 	// Start the download
 	var d = {
-		request: progress(request(url)),	// The Request object
+		request: progress(request(url)),		// The Request object
 		id: uuid.v4(),							// ID
 		filename: filename,						// Filename
 		url: url,								// Url downloaded from
@@ -70,7 +112,7 @@ state.funcs.download = function(filename, url, executor) {
 
 	// Sends out progress status when we get them
 	d.request.on("progress", function (download) {
-		d.progress = download.percent;
+		d.progress = (download.percent == null) ? 0 : download.percent;
 		state.emitter.emit("progress", d);
 	});
 
@@ -110,6 +152,13 @@ state.funcs.download = function(filename, url, executor) {
 		"filename": filename,
 		"url": url
 	});
+
+	if (executor.callback)
+		executor.callback(true, {
+			"filename": filename,
+			"url": url,
+			"id": d.id
+		});
 }
 
 state.funcs.abort = function(id, executor) {
@@ -121,6 +170,12 @@ state.funcs.abort = function(id, executor) {
 			"undefined": id === undefined,
 			"null": id === null
 		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "invalid id"
+			});
+
 		return;
 	}
 	if (d.status == "working") {
@@ -134,6 +189,9 @@ state.funcs.abort = function(id, executor) {
 			"clientIp": executor.ip,
 			"filename": d.filename
 		});
+
+		if (executor.callback)
+			executor.callback(true, {});
 	} else {
 		logger.log("warning", "attempted to abort non-working download", {
 			"connectionMethod": executor.protocol,
@@ -141,6 +199,11 @@ state.funcs.abort = function(id, executor) {
 			"filename": d.filename,
 			"status": d.status
 		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "specified download is not in the process of downloading"
+			});
 	}
 }
 
@@ -159,6 +222,12 @@ state.funcs.remove = function(id, executor) {
 			"undefined": id === undefined,
 			"null": id === null
 		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "invalid id"
+			});
+
 		return;
 	}
 	if (d.status != "working") {
@@ -171,6 +240,9 @@ state.funcs.remove = function(id, executor) {
 			"clientIp": executor.ip,
 			"filename": d.filename
 		});
+
+		if (executor.callback)
+			executor.callback(true, {});
 	} else {
 		logger.log("warning", "attempted to remove working download", {
 			"connectionMethod": executor.protocol,
@@ -178,11 +250,19 @@ state.funcs.remove = function(id, executor) {
 			"filename": d.filename,
 			"status": d.status
 		});
+
+		if (executor.callback)
+			executor.callback(false, {
+				"error": "the specified id is in the process of downloading"
+			});
 	}
 }
 
 // Setup websocket
 require(__dirname + "/libs/websocket.js")(state);
+
+// Setup HTTP
+require(__dirname + "/libs/http.js")(state);
 
 // Serves static files that a system specific
 app.use("/", serveStatic(__dirname + "/public", {

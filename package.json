@@ -11,12 +11,14 @@
   "author": "Jacob Jenner Rasmussen <jacobjener.dk> (http://jener.dk/)",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.9.3",
     "express": "^4.10.1",
     "node-uuid": "^1.4.1",
     "request": "^2.47.0",
     "request-progress": "git://github.com/jenrik/node-request-progress.git",
     "serve-static": "^1.7.1",
     "socket.io": "^1.2.0",
+    "valid-url": "^1.0.9",
     "winston": "^0.8.3"
   },
   "private": true,
