@@ -19,7 +19,7 @@
 				</td>
 				<td class="remove" ng-controller="DownloadButtonController as button">
 					<button class="btn" tooltip="{{remove}}" ng-click="button.click(download)">
-						<span class="glyphicon glyphicon-remove"></span>
+						<span ng-class="{ 'glyphicon-stop': download.status === 'working', 'glyphicon-remove': download.status !== 'working'  }" class="glyphicon"></span>
 					</button>
 				</td>
 			</tr>
