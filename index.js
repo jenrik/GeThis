@@ -3,6 +3,7 @@ var progress = require("request-progress");
 var fs = require("fs");
 var uuid = require("node-uuid");
 var winston = require("winston");
+var path = require("path");
 
 var app = require("express")();
 var serveStatic = require("serve-static");
@@ -80,21 +81,8 @@ state.funcs.download = function(filename, url, executor) {
 		return;
 	}
 
-	if (!state.validation.filename(filename)) {
-		logger.log("warning", "invalid filename given to download", {
-			"connectionMethod": executor.protocol,
-			"clientIp": executor.ip,
-			"filename": filename,
-			"url": url
-		});
-
-		if (executor.callback)
-			executor.callback(false, {
-				"error": "invalid filename"
-			});
-
-		return;
-	}
+    // Get just filename
+    filename = path.basename(filename);
 
 	// Start the download
 	var d = {

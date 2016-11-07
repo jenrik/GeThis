@@ -9,9 +9,6 @@ validation.basicLossy = function(foo) {
 }
 
 validation.string = function(s, min, max) {
-    if (!validation.basic(s))
-        return false;
-
     if (typeof s !== "string")
         return false;
 
@@ -30,16 +27,10 @@ validation.string = function(s, min, max) {
         return true;
 }
 
-var validUrl = require("valid-url");
+var validUrl = require("valid-url")
 validation.url = function(url) {
     if(!validation.string(url, 1))
         return false;
 
     return validUrl.isWebUri(url) === url;
-}
-
-validation.filename = function(filename) {
-    var match = filename.match("[a-zA-z0-9\\.\\-_]*");
-
-    return match !== null && match[0] === filename;
 }
