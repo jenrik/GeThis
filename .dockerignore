@@ -1,0 +1,8 @@
+bower-components
+download
+node_modules
+Dockerfile
+.dockerignore
+.git
+.gitignore
+npm-debug.log

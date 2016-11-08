@@ -6,6 +6,7 @@ WORKDIR /gethis
 RUN ["npm", "install"]
 RUN ["bower", "--allow-root", "install"]
 
-EXPOSE ["/gethis/download"]
+VOLUME ["/gethis/download"]
+EXPOSE 8080
 
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
